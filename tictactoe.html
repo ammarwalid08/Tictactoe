@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a2e;
+      font-family: 'Segoe UI', sans-serif;
+      color: #eee;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+      color: #e94560;
+    }
+
+    .status {
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      min-height: 1.8rem;
+      color: #a8dadc;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      gap: 8px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .cell {
+      width: 110px;
+      height: 110px;
+      background: #16213e;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      user-select: none;
+      border: 2px solid #0f3460;
+    }
+
+    .cell:hover:not(.taken) {
+      background: #0f3460;
+      transform: scale(1.04);
+    }
+
+    .cell.x {
+      color: #e94560;
+    }
+
+    .cell.o {
+      color: #a8dadc;
+    }
+
+    .cell.win {
+      background: #0f3460;
+      border-color: #e94560;
+      animation: pulse 0.4s ease;
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-box {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      border-radius: 10px;
+      padding: 0.6rem 1.4rem;
+      min-width: 80px;
+    }
+
+    .score-box .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+    }
+
+    .score-box .value {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .score-box.x-score .value { color: #e94560; }
+    .score-box.o-score .value { color: #a8dadc; }
+    .score-box.draw-score .value { color: #f4a261; }
+
+    button {
+      background: #e94560;
+      color: #fff;
+      border: none;
+      padding: 0.7rem 2rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    button:hover {
+      background: #c73652;
+      transform: scale(1.04);
+    }
+
+    .mode-toggle {
+      margin-bottom: 1.2rem;
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .mode-btn {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      color: #aaa;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .mode-btn.active {
+      border-color: #e94560;
+      color: #e94560;
+      background: #1e1e3f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="pvp-btn" onclick="setMode('pvp')">2 Players</button>
+      <button class="mode-btn" id="cpu-btn" onclick="setMode('cpu')">vs CPU</button>
+    </div>
+
+    <div class="scores">
+      <div class="score-box x-score">
+        <div class="label">X</div>
+        <div class="value" id="score-x">0</div>
+      </div>
+      <div class="score-box draw-score">
+        <div class="label">Draw</div>
+        <div class="value" id="score-draw">0</div>
+      </div>
+      <div class="score-box o-score">
+        <div class="label">O</div>
+        <div class="value" id="score-o">0</div>
+      </div>
+    </div>
+
+    <div class="status" id="status">Player X's turn</div>
+
+    <div class="board" id="board">
+      <div class="cell" onclick="handleClick(0)"></div>
+      <div class="cell" onclick="handleClick(1)"></div>
+      <div class="cell" onclick="handleClick(2)"></div>
+      <div class="cell" onclick="handleClick(3)"></div>
+      <div class="cell" onclick="handleClick(4)"></div>
+      <div class="cell" onclick="handleClick(5)"></div>
+      <div class="cell" onclick="handleClick(6)"></div>
+      <div class="cell" onclick="handleClick(7)"></div>
+      <div class="cell" onclick="handleClick(8)"></div>
+    </div>
+
+    <button onclick="resetGame()">New Game</button>
+  </div>
+
+  <script>
+    const WINS = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    let board = Array(9).fill(null);
+    let current = 'X';
+    let gameOver = false;
+    let mode = 'pvp';
+    let scores = { X: 0, O: 0, draw: 0 };
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('pvp-btn').classList.toggle('active', m === 'pvp');
+      document.getElementById('cpu-btn').classList.toggle('active', m === 'cpu');
+      resetGame();
+    }
+
+    function handleClick(i) {
+      if (gameOver || board[i]) return;
+      if (mode === 'cpu' && current === 'O') return;
+      place(i, current);
+      if (!gameOver && mode === 'cpu' && current === 'O') {
+        setTimeout(cpuMove, 350);
+      }
+    }
+
+    function place(i, player) {
+      board[i] = player;
+      const cell = document.querySelectorAll('.cell')[i];
+      cell.textContent = player;
+      cell.classList.add(player.toLowerCase(), 'taken');
+
+      const win = checkWin(player);
+      if (win) {
+        win.forEach(idx => document.querySelectorAll('.cell')[idx].classList.add('win'));
+        setStatus(`Player ${player} wins!`);
+        scores[player]++;
+        updateScores();
+        gameOver = true;
+      } else if (board.every(Boolean)) {
+        setStatus("It's a draw!");
+        scores.draw++;
+        updateScores();
+        gameOver = true;
+      } else {
+        current = current === 'X' ? 'O' : 'X';
+        const label = mode === 'cpu' && current === 'O' ? "CPU's turn" : `Player ${current}'s turn`;
+        setStatus(label);
+      }
+    }
+
+    function checkWin(player) {
+      return WINS.find(combo => combo.every(i => board[i] === player)) || null;
+    }
+
+    function cpuMove() {
+      if (gameOver) return;
+      const idx = bestMove();
+      place(idx, 'O');
+    }
+
+    function bestMove() {
+      // Try to win
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'O';
+          if (checkWin('O')) { board[i] = null; return i; }
+          board[i] = null;
+        }
+      }
+      // Block X from winning
+      for (let i = 0; i < 9; i++) {
+        if (!board[i]) {
+          board[i] = 'X';
+          if (checkWin('X')) { board[i] = null; return i; }
+          board[i] = null;
+        }
+      }
+      // Take center
+      if (!board[4]) return 4;
+      // Take a corner
+      const corners = [0, 2, 6, 8].filter(i => !board[i]);
+      if (corners.length) return corners[Math.floor(Math.random() * corners.length)];
+      // Take any open cell
+      const open = board.map((v, i) => v ? null : i).filter(i => i !== null);
+      return open[Math.floor(Math.random() * open.length)];
+    }
+
+    function setStatus(msg) {
+      document.getElementById('status').textContent = msg;
+    }
+
+    function updateScores() {
+      document.getElementById('score-x').textContent = scores.X;
+      document.getElementById('score-o').textContent = scores.O;
+      document.getElementById('score-draw').textContent = scores.draw;
+    }
+
+    function resetGame() {
+      board = Array(9).fill(null);
+      current = 'X';
+      gameOver = false;
+      document.querySelectorAll('.cell').forEach(c => {
+        c.textContent = '';
+        c.className = 'cell';
+      });
+      setStatus("Player X's turn");
+    }
+  </script>
+</body>
+</html>
